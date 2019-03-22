@@ -1,7 +1,5 @@
 data1 segment
-	number1		db	"nine$"
-	number2		db	"eight$"
-	operation	db	"multiply$"
+	input		db	20 dup(?)
 	newLine 	db 	10, 13, '$'
 	bad_input	db	"Bad input$"
 	
@@ -58,19 +56,24 @@ start1:
     mov ax, seg wstosu
     mov ss, ax
 	
-	mov bx, offset number1
+	call my_get_word
+	mov dx, offset input
+	call my_println
+	mov bx, offset input
 	call compareNumbers
 	
 	push bx
 	
-	mov bx, offset number2
+	call my_get_word
+	mov bx, offset input
 	call compareNumbers
 	
 	push bx
 
+	call my_get_word
 	pop dx
 	pop bx
-	mov ax, offset operation
+	mov ax, offset input
 	call doOperation
 	
 	call printNumbers
@@ -299,6 +302,47 @@ my_println:
 	
 	mov dx, offset newLine
     call my_print
+	ret
+	
+my_get_word:
+	mov al, 0
+	lea dx, input
+	mov ah, 0ah
+	int 21h
+	ret
+	; ; beg_whitespace_my_get_word:
+		; ; call my_getc
+		; ; cmp al, 'a' 		; czy mniejsze od a
+		; ; jl beg_whitespace_my_get_word 
+		; ; cmp al, 'z'		;czy wieksze od z
+		; ; jg beg_whitespace_my_get_word
+		
+		; mov dx, 0 ;dx - iterator
+		; mov ax, seg data1 ;Wyswietlenie dziesiatek slownie
+		; mov ds, ax
+	; beg_reading_my_get_word:
+		; mov cl, 'a'
+		; cmp al, cl; czy mniejsze od a
+		; jl end_my_get_word 
+		; ; mov dx, offset ninety
+		; ; call my_print
+		; ; cmp al, 'z'		;czy wieksze od z
+		; ; jg end_my_get_word 
+		; mov byte ptr ds:[input + dx], al
+		; call my_getc
+		; inc dx
+		; jmp beg_reading_my_get_word
+	; end_my_get_word:
+		; mov al, '$'
+		; mov byte ptr ds:[input + dx], al
+		; mov dx, offset input
+		; call my_println
+		; ret
+		
+	
+my_getc:
+	mov ah, 01H
+	int 21h
 	ret
 code1 ENDS
 
