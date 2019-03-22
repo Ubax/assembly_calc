@@ -1,9 +1,15 @@
 data1 segment
-	number1		db	"eight$"
-	number2		db	"five$"
-	operation	db	"plus$"
+	number1		db	"nine$"
+	number2		db	"eight$"
+	operation	db	"multiply$"
 	newLine 	db 	10, 13, '$'
 	bad_input	db	"Bad input$"
+	
+	;******** OPERATIONS ********
+	plus		db "add$"
+	minus		db "subtract$"
+	multiply	db "multiply$"
+	
 	
 	;******** DIGITS *********
 	zero		db	"zero$"
@@ -30,14 +36,14 @@ data1 segment
 	nineteen	db	"nineteen$"
 	
 	;******* TENS *******
-	twenty		db 	"twenty$"
-	thirty		db	"thirty$"
-	fourty		db	"fourty$"
-	fifty		db	"fifty$"
-	sixty		db	"sixty$"
-	seventy		db 	"seventy$"
-	eighty		db	"eighty$"
-	ninety		db	"ninety$"
+	twenty		db 	"twenty $"
+	thirty		db	"thirty $"
+	fourty		db	"fourty $"
+	fifty		db	"fifty $"
+	sixty		db	"sixty $"
+	seventy		db 	"seventy $"
+	eighty		db	"eighty $"
+	ninety		db	"ninety $"
 	
 	;****** NUMBERS ARRAY ******
 	digit_array	dw	offset zero, offset one, offset two, offset three, offset four, offset five, offset six, offset seven, offset eight, offset nine
@@ -56,53 +62,140 @@ start1:
 	call compareNumbers
 	
 	push bx
-	call printNumbers
 	
 	mov bx, offset number2
 	call compareNumbers
 	
 	push bx
-	call printNumbers
 
-	pop ax
+	pop dx
 	pop bx
-	add bx, ax
+	mov ax, offset operation
+	call doOperation
 	
-	cmp bx, 13
-	je res
-	mov dx, offset eleven
-	call my_println
-	jmp end1
-	
-res:
-	mov dx, offset nineteen
-	call my_println
-	jmp end1
+	call printNumbers
 
 end1:
     mov ax,4c00h
     int 21h
 
-printNumbers:
-	cmp bx, 10
-	jl print_digit
-print_digit:
-	push ax
-	push dx
-	mov al, bl
-	mov dl, 2
-	mul dl
-	mov bl, al
-	mov ax, seg data1
-	mov ds, ax
-	mov dx, word ptr ds:[digit_array + bx]
-	call my_println
-	pop dx
-	pop ax
-	ret
-print_one:
+printNumbers: ;bl - number
+		cmp bx, 10
+		jl print_digit
+		cmp bx, 20
+		jl print_teen
+		jge print_tens
+	print_digit:
+		push ax
+		push dx
+		mov al, bl
+		mov dl, 2
+		mul dl
+		mov bl, al
+		mov ax, seg data1
+		mov ds, ax
+		mov dx, word ptr ds:[digit_array + bx]
+		call my_println
+		pop dx
+		pop ax
+		ret
+	print_teen:
+		push ax
+		push dx
+		sub bl, 10
+		mov al, bl
+		mov dl, 2
+		mul dl
+		mov bl, al
+		mov ax, seg data1
+		mov ds, ax
+		mov dx, word ptr ds:[teen_array + bx]
+		call my_println
+		pop dx
+		pop ax
+		ret
+	print_tens:
+		push ax
+		push dx
+		
+		mov al, bl 	;Wyciaganie liczby dziesiatek
+		mov bl, 10
+		div bl
+		
+		push ax		;Odlozenie wyniku na stos (al - 10, ah - jednosci)
+		
+		sub al, 2	;Odjecie od wyniku 2 bo tablica zaczyna sie od 20
+		
+		mov dl, 2	;Mnozenie wyniku przez dwa (bo word)
+		mul dl
+		
+		mov ax, seg data1 ;Wyswietlenie dziesiatek slownie
+		mov ds, ax
+		mov dx, word ptr ds:[tens_array + bx]
+		call my_print
+		
+		pop ax	;Wyswietlenie jednosci slownie
+		mov bl, ah
+		pop dx
+		pop ax
+		jmp print_digit
+		ret
+
+doOperation: ; bx - num1, dx-num2, ax-operation offset
+		push bx
+		push dx
+		
+		mov bx, ax
+		
+		mov ax, seg data1
+		mov ds, ax
+		mov es, ax
+		
+		cld
+		mov cx, 4
+		mov si, bx
+		mov di, offset plus
+		repe cmpsb
+		je plus_operation
+		
+		mov cx, 9
+		mov si, bx
+		mov di, offset minus
+		repe cmpsb	
+		je minus_operation
+		
+		mov cx, 9
+		mov si, bx
+		mov di, offset multiply
+		repe cmpsb
+		je multiply_operation
+		jmp unknown_operation
+		
+	plus_operation:
+		pop bx
+		pop ax
+		add bx, ax
+		ret
+	minus_operation:
+		pop bx
+		pop ax
+		sub bx, ax
+		ret
+	multiply_operation:
+		pop bx
+		pop ax
+		mul bl
+		mov bx,ax
+		ret
+	unknown_operation:
+		pop bx
+		pop ax
+		mov dx, offset bad_input
+		call my_println
+		ret
+		
 	
-compareNumbers:
+compareNumbers: ; bx - number
 		mov ax, seg data1
 		mov ds, ax
 		mov es, ax
@@ -193,15 +286,19 @@ compareNumbers:
 		mov dx, offset bad_input
 		call my_println
 		ret
-		
-my_println:
+
+my_print:
     mov ax, seg data1
     mov ds, ax
     mov ah, 9h
     int 21h
+	ret
+	
+my_println:
+    call my_print
 	
 	mov dx, offset newLine
-    int 21h
+    call my_print
 	ret
 code1 ENDS
 
