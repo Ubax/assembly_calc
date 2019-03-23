@@ -49,13 +49,17 @@ start1:
 	mov bx,15
 	call printNumbers
 	
-	mov bx,20
+	mov bl,20
 	call printNumbers
 	
-	mov bx,25
+	mov bl,25
 	call printNumbers
 	
-	mov bx,33
+	mov bl,33
+	call printNumbers
+	mov bl,79
+	call printNumbers
+	mov bl,81
 	call printNumbers
 end1:
     mov ax,4c00h
