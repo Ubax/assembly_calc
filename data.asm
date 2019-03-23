@@ -24,6 +24,7 @@
 	minus			db "minus$"
 	multiply		db "times$"
 		
+	neg_str			db "minus $"
 		
 	;************* DIGITS *************
 	zero			db	"zero$"
@@ -60,6 +61,6 @@
 	ninety			db	"ninety $"
 		
 	;************* NUMBERS ARRAY *************
-	tens_array		dw	offset twenty, offset thirty, offset fourty, offset fifty, offset sixty, offset seventy, offset ninety
+	tens_array		dw	offset twenty, offset thirty, offset fourty, offset fifty, offset sixty, offset seventy, offset eighty, offset ninety
 	digit_array		dw	offset zero, offset one, offset two, offset three, offset four, offset five, offset six, offset seven, offset eight, offset nine
 	teen_array		dw	offset ten, offset eleven, offset twelve, offset thirteen, offset fourteen, offset fifteen, offset sixteen, offset seventeen, offset eighteen, offset nineteen

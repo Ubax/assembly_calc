@@ -36,8 +36,6 @@ doOperation: ; bx - num1, dx-num2, ax-operation offset
 	minus_operation:
 		pop ax
 		pop bx
-		cmp ax,bx
-			jg minus_wrong_numbers_order
 		sub bx, ax
 		ret
 	multiply_operation:
