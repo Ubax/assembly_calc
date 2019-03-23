@@ -1,12 +1,29 @@
 data1 segment
-	input		db	20 dup(?)
+	input		db	255 	;Maximum number of charactes entered by user
+				db 	?	;Number of charactes entered
+	inputstr	db	256 dup('$')
 	newLine 	db 	10, 13, '$'
+	
+	;******** ERROR MESSAGES ********
 	bad_input	db	"Bad input$"
+	in_num		db	"in number: $"
+	in_opera	db	"in operation: $"
+	wrg_ord		db	"wrong numbers order in subtract operation$"
+	
+	m_welcome	db	"Wirte your operation: $"
+	m_result	db 	"This is result: $"
+	
+	number1		db	20 dup('$')
+	number2		db	20 dup('$')
+	operation	db	20 dup('$')
+	
+	wh_min		db	'a'
+	wh_max		db	'z'
 	
 	;******** OPERATIONS ********
-	plus		db "add$"
-	minus		db "subtract$"
-	multiply	db "multiply$"
+	plus		db "plus$"
+	minus		db "minus$"
+	multiply	db "times$"
 	
 	
 	;******** DIGITS *********
@@ -44,50 +61,154 @@ data1 segment
 	ninety		db	"ninety $"
 	
 	;****** NUMBERS ARRAY ******
+	tens_array	dw	offset twenty, offset thirty, offset fourty, offset fifty, offset sixty, offset seventy, offset ninety
 	digit_array	dw	offset zero, offset one, offset two, offset three, offset four, offset five, offset six, offset seven, offset eight, offset nine
 	teen_array	dw	offset ten, offset eleven, offset twelve, offset thirteen, offset fourteen, offset fifteen, offset sixteen, offset seventeen, offset eighteen, offset nineteen
-	tens_array	dw	offset twenty, offset thirty, offset fourty, offset fifty, offset sixty, offset seventy, offset ninety
+	
 data1 ends
 
 code1 segment
 start1:
-    ;inicjacja stosu
+    ;Stack initiation
     mov sp, offset wstosu
     mov ax, seg wstosu
     mov ss, ax
 	
+	mov dx, offset m_welcome
+	call my_print
+	
 	call my_get_word
-	mov dx, offset input
+	mov dx, offset inputstr
 	call my_println
-	mov bx, offset input
+	
+	call processInput
+	
+	
+	mov bx, offset number1
 	call compareNumbers
 	
 	push bx
 	
-	call my_get_word
-	mov bx, offset input
+	mov bx, offset number2
 	call compareNumbers
 	
 	push bx
 
-	call my_get_word
 	pop dx
 	pop bx
-	mov ax, offset input
+	mov ax, offset operation
 	call doOperation
 	
+	mov dx, offset m_result
+	call my_print
 	call printNumbers
 
 end1:
     mov ax,4c00h
     int 21h
 
+log_error:
+	mov dx, offset bad_input
+	call my_println
+	ret
+	
+print_char:
+	mov ah, 2
+	mov dl, al
+	int 21h
+	ret
+processWhitespaces:
+	inc si
+	mov bl, byte ptr ds:[si]
+	;call print_char
+	cmp bl, '$'
+		je end_processWhitespaces
+	cmp bl, byte ptr ds:[wh_min] 		; czy mniejsze od a
+		jl processWhitespaces 
+	cmp bl, byte ptr ds:[wh_max]		;czy wieksze od z
+		jg processWhitespaces
+	end_processWhitespaces:
+	ret
+processInput:
+	mov ax, seg data1
+	mov ds, ax
+	mov si, offset input + 1
+	call processWhitespaces
+	mov cx, offset number1
+	beg_reading_number1:
+		mov bl, byte ptr ds:[si]
+		;call print_char
+		cmp bl, '$'
+			je log_error
+		cmp bl, byte ptr ds:[wh_min]			; czy mniejsze od a
+			jl end_reading_number1 
+		cmp bl, byte ptr ds:[wh_max]			;czy wieksze od z
+			jg end_reading_number1
+		mov ax, si
+		mov si, cx
+		mov byte ptr ds:[si], bl
+		mov si, ax
+		inc si
+		inc cx
+		jmp beg_reading_number1
+	end_reading_number1:
+		mov dl, '$'
+		mov byte ptr ds:[number1 + 5], dl
+		
+	call processWhitespaces
+	mov cx, offset operation
+	beg_reading_operation:
+		mov bl, byte ptr ds:[si]
+		;call print_char
+		cmp bl, '$'
+			je log_error
+		cmp bl, byte ptr ds:[wh_min] 		; czy mniejsze od a
+			jl end_reading_operation 
+		cmp bl, byte ptr ds:[wh_max]		;czy wieksze od z
+			jg end_reading_operation
+		mov ax, si
+		mov si, cx
+		mov byte ptr ds:[si], bl
+		mov si, ax
+		inc si
+		inc cx
+		jmp beg_reading_operation
+	end_reading_operation:
+		mov dl, '$'
+		mov byte ptr ds:[number1 + 5], dl
+		
+	call processWhitespaces
+	mov cx, offset number2
+	beg_reading_number2:
+		mov bl, byte ptr ds:[si]
+		;call print_char
+		cmp bl, '$'
+			je end_reading_number2
+		cmp bl, byte ptr ds:[wh_min] 		; czy mniejsze od a
+			jl end_reading_number2 
+		cmp bl, byte ptr ds:[wh_max]			;czy wieksze od z
+			jg end_reading_number2
+		mov ax, si
+		mov si, cx
+		mov byte ptr ds:[si], bl
+		mov si, ax
+		inc si
+		inc cx
+		jmp beg_reading_number2
+	end_reading_number2:
+		mov dl, '$'
+		mov byte ptr ds:[number1 + 5], dl
+	end_processInput:
+		ret
+
 printNumbers: ;bl - number
+		cmp bx, 99
+			jg log_error
 		cmp bx, 10
-		jl print_digit
+			jl print_digit
 		cmp bx, 20
-		jl print_teen
-		jge print_tens
+			jl print_teen
+			jge print_tens
 	print_digit:
 		push ax
 		push dx
@@ -131,6 +252,7 @@ printNumbers: ;bl - number
 		
 		mov dl, 2	;Mnozenie wyniku przez dwa (bo word)
 		mul dl
+		mov bx, ax
 		
 		mov ax, seg data1 ;Wyswietlenie dziesiatek slownie
 		mov ds, ax
@@ -155,24 +277,24 @@ doOperation: ; bx - num1, dx-num2, ax-operation offset
 		mov es, ax
 		
 		cld
-		mov cx, 4
+		mov cx, 5
 		mov si, bx
 		mov di, offset plus
 		repe cmpsb
-		je plus_operation
+			je plus_operation
 		
-		mov cx, 9
+		mov cx, 6
 		mov si, bx
 		mov di, offset minus
 		repe cmpsb	
-		je minus_operation
+			je minus_operation
 		
-		mov cx, 9
+		mov cx, 6
 		mov si, bx
 		mov di, offset multiply
 		repe cmpsb
-		je multiply_operation
-		jmp unknown_operation
+			je multiply_operation
+			jmp unknown_operation
 		
 	plus_operation:
 		pop bx
@@ -180,8 +302,10 @@ doOperation: ; bx - num1, dx-num2, ax-operation offset
 		add bx, ax
 		ret
 	minus_operation:
-		pop bx
 		pop ax
+		pop bx
+		cmp ax,bx
+			jg minus_wrong_numbers_order
 		sub bx, ax
 		ret
 	multiply_operation:
@@ -193,10 +317,18 @@ doOperation: ; bx - num1, dx-num2, ax-operation offset
 	unknown_operation:
 		pop bx
 		pop ax
-		mov dx, offset bad_input
+		call log_error
+		mov dx, offset in_opera
+		call my_print
+		mov dx, bx
 		call my_println
 		ret
-		
+	minus_wrong_numbers_order:
+		mov bx, 99
+		call log_error
+		mov dx, offset wrg_ord
+		call my_println
+		ret
 	
 compareNumbers: ; bx - number
 		mov ax, seg data1
@@ -208,7 +340,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset zero
 		repe cmpsb
-		jne comp_one
+			jne comp_one
 		mov bx, 0 
 		ret
 
@@ -217,7 +349,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset one
 		repe cmpsb
-		jne comp_two
+			jne comp_two
 		mov bx, 1 
 		ret
 
@@ -226,7 +358,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset two
 		repe cmpsb
-		jne comp_three
+			jne comp_three
 		mov bx, 2 
 		ret
 	comp_three:
@@ -234,7 +366,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset three
 		repe cmpsb
-		jne comp_four
+			jne comp_four
 		mov bx, 3 
 		ret
 	comp_four:
@@ -242,7 +374,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset four
 		repe cmpsb
-		jne comp_five
+			jne comp_five
 		mov bx, 4 
 		ret
 	comp_five:
@@ -250,7 +382,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset five
 		repe cmpsb
-		jne comp_six
+			jne comp_six
 		mov bx, 5 
 		ret
 	comp_six:
@@ -258,7 +390,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset six
 		repe cmpsb
-		jne comp_seven
+			jne comp_seven
 		mov bx, 6 
 		ret
 	comp_seven:
@@ -266,7 +398,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset seven
 		repe cmpsb
-		jne comp_eight
+			jne comp_eight
 		mov bx, 7 
 		ret
 	comp_eight:
@@ -274,7 +406,7 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset eight
 		repe cmpsb
-		jne comp_nine
+			jne comp_nine
 		mov bx, 8 
 		ret
 	comp_nine:
@@ -282,11 +414,14 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset nine
 		repe cmpsb
-		jne compareNumbers_end
+			jne compareNumbers_end
 		mov bx, 9 
 		ret
 	compareNumbers_end:
-		mov dx, offset bad_input
+		call log_error
+		mov dx, offset in_num
+		call my_print
+		mov dx, bx
 		call my_println
 		ret
 
@@ -305,44 +440,21 @@ my_println:
 	ret
 	
 my_get_word:
-	mov al, 0
-	lea dx, input
+	mov ax, seg data1
+    mov ds, ax
 	mov ah, 0ah
+	mov dx, offset input
 	int 21h
-	ret
-	; ; beg_whitespace_my_get_word:
-		; ; call my_getc
-		; ; cmp al, 'a' 		; czy mniejsze od a
-		; ; jl beg_whitespace_my_get_word 
-		; ; cmp al, 'z'		;czy wieksze od z
-		; ; jg beg_whitespace_my_get_word
-		
-		; mov dx, 0 ;dx - iterator
-		; mov ax, seg data1 ;Wyswietlenie dziesiatek slownie
-		; mov ds, ax
-	; beg_reading_my_get_word:
-		; mov cl, 'a'
-		; cmp al, cl; czy mniejsze od a
-		; jl end_my_get_word 
-		; ; mov dx, offset ninety
-		; ; call my_print
-		; ; cmp al, 'z'		;czy wieksze od z
-		; ; jg end_my_get_word 
-		; mov byte ptr ds:[input + dx], al
-		; call my_getc
-		; inc dx
-		; jmp beg_reading_my_get_word
-	; end_my_get_word:
-		; mov al, '$'
-		; mov byte ptr ds:[input + dx], al
-		; mov dx, offset input
-		; call my_println
-		; ret
-		
 	
-my_getc:
-	mov ah, 01H
-	int 21h
+	mov ax, seg data1
+	mov ds, ax
+	mov si, offset input + 1 ;NUMBER OF CHARACTERS ENTERED.
+	mov cl, [ si ] ;MOVE LENGTH TO CL.
+	mov ch, 0      ;CLEAR CH TO USE CX. 
+	inc cx ;TO REACH CHR(13).
+	add si, cx ;NOW SI POINTS TO CHR(13).
+	mov al, '$'
+	mov [ si ], al ;REPLACE CHR(13) BY '$'
 	ret
 code1 ENDS
 
