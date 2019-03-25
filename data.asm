@@ -4,10 +4,12 @@
 	newLine 		db 	10, 13, '$'
 		
 	;************* ERROR MESSAGES *************
-	bad_input		db	"Bad input$"
-	in_num			db	"in number: $"
-	in_opera		db	"in operation: $"
-	wrg_ord			db	"wrong numbers order in subtract operation$"
+	error_input		db	"Error in input$"
+	unknown_ope		db	"Unknown operation: $"
+	unknown_num		db	"Unknown number: $"
+	num_too_big		db	"Number is too big$"
+	
+	is_error		db	0
 		
 	m_welcome		db	"Wirte your operation: $"
 	m_result		db 	"This is result: $"

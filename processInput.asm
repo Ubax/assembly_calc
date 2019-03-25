@@ -1,7 +1,6 @@
 processWhitespaces:
 	inc si
 	mov bl, byte ptr ds:[si]
-	;call print_char
 	cmp bl, '$'
 		je end_processWhitespaces
 	cmp bl, byte ptr ds:[wh_min] 		; czy mniejsze od a
@@ -19,9 +18,8 @@ processInput:
 	mov cx, offset number1
 	beg_reading_number1:
 		mov bl, byte ptr ds:[si]
-		;call print_char
 		cmp bl, '$'
-			je log_error
+			je processInput_error
 		cmp bl, byte ptr ds:[wh_min]			; czy mniejsze od a
 			jl end_reading_number1 
 		cmp bl, byte ptr ds:[wh_max]			;czy wieksze od z
@@ -41,9 +39,8 @@ processInput:
 	mov cx, offset operation
 	beg_reading_operation:
 		mov bl, byte ptr ds:[si]
-		;call print_char
 		cmp bl, '$'
-			je log_error
+			je processInput_error
 		cmp bl, byte ptr ds:[wh_min] 		; czy mniejsze od a
 			jl end_reading_operation 
 		cmp bl, byte ptr ds:[wh_max]		;czy wieksze od z
@@ -63,7 +60,6 @@ processInput:
 	mov cx, offset number2
 	beg_reading_number2:
 		mov bl, byte ptr ds:[si]
-		;call print_char
 		cmp bl, '$'
 			je end_reading_number2
 		cmp bl, byte ptr ds:[wh_min] 		; czy mniejsze od a
@@ -81,4 +77,8 @@ processInput:
 		mov dl, '$'
 		mov byte ptr ds:[number1 + 5], dl
 	end_processInput:
+		ret
+	processInput_error:
+		mov dx, offset error_input
+		call log_error
 		ret

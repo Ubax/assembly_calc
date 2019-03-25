@@ -1,4 +1,6 @@
 printNumbers: ;bx - number
+		cmp bx,99
+			jg printNumbers_too_big
 		cmp bx, 0
 			jge doPrintNumbers
 		mov dx, offset neg_str
@@ -51,4 +53,8 @@ printNumbers: ;bx - number
 	
 		cmp bl, 0
 		jne print_digit
+		ret
+	printNumbers_too_big:
+		mov dx, offset num_too_big
+		call log_error
 		ret

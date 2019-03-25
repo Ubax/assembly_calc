@@ -13,8 +13,9 @@ start1:
 	call my_print
 	
 	call my_get_word
-	mov dx, offset inputstr
-	call my_println
+	
+	mov dx, offset newLine
+	call my_print
 	
 	call processInput
 	
@@ -33,6 +34,11 @@ start1:
 	pop bx
 	mov ax, offset operation
 	call doOperation
+	
+	mov ax, seg data1
+	mov ds, ax
+	cmp byte ptr ds:[is_error], 1
+		je end1
 	
 	mov dx, offset m_result
 	call my_print

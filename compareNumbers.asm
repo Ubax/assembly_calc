@@ -82,13 +82,12 @@ compareNumbers: ; bx - number
 		mov si, bx
 		mov di, offset nine
 		repe cmpsb
-			jne compareNumbers_end
+			jne compareNumbers_unknown
 		mov bx, 9 
 		ret
-	compareNumbers_end:
-		call log_error
-		mov dx, offset in_num
+	compareNumbers_unknown:
+		mov dx, offset unknown_num
 		call my_print
 		mov dx, bx
-		call my_println
+		call log_error
 		ret

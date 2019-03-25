@@ -26,7 +26,7 @@ doOperation: ; bx - num1, dx-num2, ax-operation offset
 		mov di, offset multiply
 		repe cmpsb
 			je multiply_operation
-			jmp unknown_operation
+			jmp doOperation_unknown
 		
 	plus_operation:
 		pop bx
@@ -44,18 +44,11 @@ doOperation: ; bx - num1, dx-num2, ax-operation offset
 		mul bl
 		mov bx,ax
 		ret
-	unknown_operation:
+	doOperation_unknown:
 		pop bx
 		pop ax
+		mov dx, offset unknown_ope
 		call log_error
-		mov dx, offset in_opera
-		call my_print
 		mov dx, bx
-		call my_println
-		ret
-	minus_wrong_numbers_order:
-		mov bx, 99
-		call log_error
-		mov dx, offset wrg_ord
 		call my_println
 		ret
