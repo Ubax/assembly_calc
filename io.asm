@@ -28,14 +28,17 @@ my_get_word:
 	add si, cx ;NOW SI POINTS TO CHR(13).
 	mov al, '$'
 	mov [ si ], al ;REPLACE CHR(13) BY '$'
-
-log_error:
-	mov dx, offset bad_input
-	call my_println
 	ret
 	
-print_char:
-	mov ah, 2
-	mov dl, al
-	int 21h
+log_error:
+	call my_println
+	mov ax, seg data1
+	mov ds, ax
+	mov byte ptr ds:[is_error], 1
 	ret
+	
+; print_char:
+	; mov ah, 2
+	; mov dl, al
+	; int 21h
+	; ret
